@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+  <title>Vue & Firebase</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.3.0/firebase-firestore.js"></script>
+  <script src="/dbconf.js"></script>
+   
+</head>
+<body>
+  <div id="app">
+    <h2>{{ message }}</h2>
+	<form @submit.prevent="addColeccion">
+		<input v-model="nomColeccion" type="text" id="nombre" placeholder="nombre de la coleccion"/><br>
+		<input v-model="tipoColeccion" type="text" id="tarea" placeholder="tipo"/><br>
+		<input v-model="itemsColeccion" type="text" id="tarea" placeholder="número de items"/><br>
+		<label>Colección física: <input v-model="coleccionFisica" type="checkbox" id="tarea" /><br>
+		<input type="submit" value="Añadir"/>
+	</form>
+	<hr>
+	<ul>
+		 <li v-for="coleccion in misColecciones" :key="coleccion.id" :id="coleccion.id">
+			{{ coleccion.id }} - {{ coleccion.data.items }} {{ coleccion.data.tipo }}
+			<span v-if="coleccion.data.fisica">(colección física)</span>
+			<span v-else>(colección digital)</span>
+		</li> 
+	</ul>
+  </div>
+
+  <script>
+  	  // FBConfig
+	  
+	firebase.initializeApp(FBConfig); //inicialización de Firebase con mi configuración
+	const db= firebase.firestore(); //Acceso a firestore
+	colecciones= db.collection('colecciones')
+	
+	
+    var app = new Vue({
+      el: '#app',
+      data: {
+        message: 'Creador de colecciones',
+		nomColeccion:null,
+		tipoColeccion: null,
+		itemsColeccion: null,
+		coleccionFisica: true,
+		misColecciones: []
+      },
+	  
+	  methods: {
+		  addColeccion() {
+			this.nomColeccion=this.nomColeccion.replace(/ /g,"_");
+			console.log (this.nomColeccion)
+			
+			colecciones.doc(this.nomColeccion).set ({
+				tipo: this.tipoColeccion,
+				items: this.itemsColeccion,
+				fisica: this.coleccionFisica
+			})
+	
+		  }
+	  },
+	  
+	  mounted() {
+	  
+		this.misColecciones = [];
+		
+		colecciones.get()
+		.then (res => {
+			res.docs.map(item => {
+				this.misColecciones.push({id:item.id.replace(/_/g," "), data: item.data()})
+			});
+			console.log (this.misColecciones)
+		})
+		
+		}
+    })
+  </script>
+</body>
+</html>
